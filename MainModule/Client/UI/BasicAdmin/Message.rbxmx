@@ -6,7 +6,7 @@
 		<Properties>
 			<BinaryString name="AttributesSerialize"></BinaryString>
 			<bool name="AutoLocalize">false</bool>
-			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>dgxzhjgfhjfhgjhdjgfzjdhg
 			<bool name="ClipToDeviceSafeArea">true</bool>
 			<bool name="DefinesCapabilities">false</bool>
 			<int name="DisplayOrder">0</int>
