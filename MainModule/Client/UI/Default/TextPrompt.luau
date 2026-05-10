@@ -1,10 +1,7 @@
-client, service = nil, nil
-
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-	
+	local client = env.client
+	local service = env.service
+
 	local gTable
 	local answer
 

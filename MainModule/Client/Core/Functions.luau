@@ -1,38 +1,6 @@
 --# selene: allow(empty_loop)
-client = nil
-service = nil
-Pcall = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-
 --// Special Variables
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
-	local _G, game, script, getfenv, setfenv, workspace,
-	getmetatable, setmetatable, loadstring, coroutine,
-	rawequal, typeof, print, math, warn, error,  pcall,
-	xpcall, select, rawset, rawget, ipairs, pairs,
-	next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-	newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-	NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-	Vector3int16, require, table, type, wait,
-	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay =
-		_G, game, script, getfenv, setfenv, workspace,
-	getmetatable, setmetatable, loadstring, coroutine,
-	rawequal, typeof, print, math, warn, error,  pcall,
-	xpcall, select, rawset, rawget, ipairs, pairs,
-	next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-	newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-	NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-	Vector3int16, require, table, type, wait,
-	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay
-
+return function(Vargs)
 	local script = script
 	local service = Vargs.Service
 	local client = Vargs.Client
@@ -52,10 +20,6 @@ return function(Vargs, GetEnv)
 	local function RunLast()
 		Functions.RunLast = nil;
 	end
-
-	getfenv().client = nil
-	getfenv().service = nil
-	getfenv().script = nil
 
 	client.Functions = {
 		Init = Init;
@@ -1313,7 +1277,7 @@ return function(Vargs, GetEnv)
 			if Variables.KeyBinds[tostring(key)] ~= nil then
 				Variables.KeyBinds[tostring(key)] = nil
 				Remote.Get("UpdateKeybinds",Variables.KeyBinds)
-				Routine(function()
+				client.Routine(function()
 					UI.Make("Hint",{
 						Message = `Removed key "{Functions.KeyCodeToName(key)}" from keybinds`
 					})
@@ -1925,7 +1889,7 @@ return function(Vargs, GetEnv)
 		end;
 
 		SHA256 = function(...)
-			return require(client.Shared.HashLib).SHA256(...)
+			return client.Require(client.Shared.HashLib).SHA256(...)
 		end;
 
 		GetFriendsOnline = function(maxFriends)

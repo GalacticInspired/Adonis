@@ -40,7 +40,7 @@ local CORE_LOADING_ORDER = table.freeze {
 --//	Your mom
 
 --// Holiday roooaaAaaoooAaaooOod
-local _G, game, script, getfenv, setfenv, workspace,
+local _G, game, script, workspace,
 getmetatable, setmetatable, loadstring, coroutine,
 rawequal, typeof, print, math, warn, error,  pcall,
 xpcall, select, rawset, rawget, ipairs, pairs,
@@ -50,7 +50,7 @@ NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
 NumberSequenceKeypoint, PhysicalProperties, Region3int16,
 Vector3int16, require, table, type, wait,
 Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, spawn, delay, task, assert, debug =
-	_G, game, script, getfenv, setfenv, workspace,
+	_G, game, script, workspace,
 getmetatable, setmetatable, loadstring, coroutine,
 rawequal, typeof, print, math, warn, error,  pcall,
 xpcall, select, rawset, rawget, ipairs, pairs,
@@ -87,8 +87,6 @@ local SERVICES_WE_USE = table.freeze {
 }
 
 local unique = {}
-local origEnv = getfenv()
-setfenv(1, setmetatable({}, { __metatable = unique }))
 local locals = {}
 local server = {}
 local service = {}
@@ -150,21 +148,6 @@ local function Routine(func, ...)
 	return coroutine.resume(coroutine.create(func), ...)
 end
 
-local function GetEnv(env, repl)
-	local scriptEnv = setmetatable({}, {
-		__index = function(tab, ind)
-			return (locals[ind] or (env or origEnv)[ind])
-		end;
-
-		__metatable = unique;
-	})
-	if repl and type(repl) == "table" then
-		for ind, val in pairs(repl) do
-			scriptEnv[ind] = val
-		end
-	end
-	return scriptEnv
-end
 
 local function GetVargTable()
 	return {
@@ -179,7 +162,7 @@ local function LoadModule(module, yield, envVars, noEnv, isCore)
 	local isRaw = type(module) == "string"
 	local isValue = not isFunc and not isRaw and module:IsA("StringValue")
 	local module = (isFunc and service.New("ModuleScript", {Name = "Non-Module Loaded"})) or module
-	local plug = (isFunc and module) or isValue and (server.Core.LoadCode or function(...) return require(server.Shared.FiOne)(...) end)(server.Functions.Base64Decode(module.Value), GetEnv({}, envVars)) or isRaw and assert(assert(server.Core.Loadstring, "Cannot compile plugin due to Core.Loadstring missing")(module, GetEnv({}, envVars)), "Failed to compile module")() or require(module)
+	local plug = (isFunc and module) or isValue and (server.Core.LoadCode or function(...) return require(server.Shared.FiOne)(...) end)(server.Functions.Base64Decode(module.Value)) or isRaw and assert(assert(server.Core.Loadstring, "Cannot compile plugin due to Core.Loadstring missing")(module), "Failed to compile module")() or require(module)
 
 	if server.Modules and not isFunc and not isRaw then
 		table.insert(server.Modules,module)
@@ -189,18 +172,17 @@ local function LoadModule(module, yield, envVars, noEnv, isCore)
 		if isCore then
 			local ran, err = service.TrackTask(
 				`CoreModule: {module}`,
-				((noEnv or isRaw or isValue) and plug) or setfenv(plug, GetEnv(getfenv(plug), envVars)),
+				plug,
 				function(err)
 					warn(`Module encountered an error while loading: {module}\n{err}\n{debug.traceback()}`)
 				end,
-				GetVargTable(),
-				GetEnv
+				GetVargTable()
 			)
 			return err
 		else
 			local ran, err = service.TrackTask(
 				`Plugin: {module}`,
-				((noEnv or isRaw or isValue) and plug) or setfenv(plug, GetEnv(getfenv(plug), envVars)),
+				plug,
 				function(err)
 					warn(`Module encountered an error while loading: {module}\n{err}\n{debug.traceback()}`)
 				end,
@@ -305,10 +287,8 @@ locals = {
 	HookedEvents = HookedEvents;
 	ErrorLogs = ErrorLogs;
 	logError = logError;
-	origEnv = origEnv;
 	Routine = Routine;
 	Folder = Folder;
-	GetEnv = GetEnv;
 	Pcall = Pcall;
 };
 
@@ -330,7 +310,7 @@ end, function(c, parent, tab)
 	if not isModule(c) and c ~= server.Loader and c ~= server.Runner and c ~= server.Model and c ~= script and c ~= Folder and parent == nil then
 		tab.UnHook()
 	end
-end, ServiceSpecific, GetEnv(nil, {server = server}))
+end, ServiceSpecific, server)
 
 --// Localize
 os = service.Localize(os)
@@ -392,8 +372,6 @@ for ind, loc in pairs({
 	game = game;
 	spawn = spawn;
 	script = script;
-	getfenv = getfenv;
-	setfenv = setfenv;
 	workspace = workspace;
 	getmetatable = getmetatable;
 	setmetatable = setmetatable;
@@ -496,7 +474,7 @@ return service.NewProxy({
 		end
 
 		--// Begin Script Loading
-		data = service.Wrap(data or {}) or {}
+		data = data or {}
 		local silentStartup = data.SilentStartup or false
 
 		if not data.Loader and not silentStartup then
@@ -513,11 +491,8 @@ return service.NewProxy({
 			end
 		end
 
-		if data.NightlyMode then -- Wrap things that should be wrapped?
-			for _, v in {"Folder", "Deps", "CommandModules", "Client", "Dependancies", "PluginsFolder"} do
-				server[v] = service.Wrap(server[v])
-			end
-			locals.Folder = service.Wrap(locals.Folder)
+		if data.NightlyMode then
+			-- (NightlyMode wrapping removed)
 		end
 
 		if data.DebugMode == true then
@@ -530,8 +505,6 @@ return service.NewProxy({
 			AdonisDebugEnabled.Value = true
 			AdonisDebugEnabled.Parent = Folder.Parent.Client
 		end
-
-		setfenv(1, setmetatable({}, {__metatable = unique}))
 
 		--// Server Variables
 		local setTab = require(server.Deps.DefaultSettings)

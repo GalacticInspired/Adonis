@@ -1107,10 +1107,7 @@
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Modifier</string>
 					<string name="ScriptGuid">{3167C470-AD40-4469-9A9B-4A663E8CB816}</string>
-					<ProtectedString name="Source"><![CDATA[service = nil;
-client = nil;
-
-local function ignore(child)
+					<ProtectedString name="Source"><![CDATA[local function ignore(child)
 	if child.Parent and child.Parent.Parent then
 		if child.Parent.Parent.Name == "TabFrame" then
 			--return true;
@@ -1137,9 +1134,8 @@ local function propChange(child, target, list)
 end
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
 
 	local gui = script.Parent.Parent;--data.GUI;
 

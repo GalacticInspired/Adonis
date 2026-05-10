@@ -7,7 +7,6 @@ local wait = task.wait
 local time = time
 local pcall = pcall
 local xpcall = xpcall
-local setfenv = setfenv
 local tostring = tostring
 
 do
@@ -166,7 +165,6 @@ local function Locked(obj)
 end
 
 local function loadingTime()
-	setfenv(1, {})
 	print("LoadingTime Called:", tostring(time() - start))
 end
 
@@ -179,11 +177,7 @@ local function callCheck(child)
 		print("Child not locked")
 		xpcall(function()
 			return child[{}]
-		end, function()
-			if getfenv(1) ~= getfenv(2) then
-				Kill("[ACLI-0xBC34ADD8]: Check caller error")
-			end
-		end)
+		end, function() end)
 	end
 end
 

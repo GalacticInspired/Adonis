@@ -1,17 +1,7 @@
-server = nil
-service = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-
 type Card = {id: string, name: string, desc: string, labels: {any}?}
 type List = {id: string, name: string, cards: {Card}}
 
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 

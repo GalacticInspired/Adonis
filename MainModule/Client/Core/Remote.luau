@@ -1,38 +1,5 @@
-client = nil
-service = nil
-Pcall = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-log = nil
-
 --// Remote
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
-	local _G, game, script, getfenv, setfenv, workspace,
-	getmetatable, setmetatable, loadstring, coroutine,
-	rawequal, typeof, print, math, warn, error,  pcall,
-	xpcall, select, rawset, rawget, ipairs, pairs,
-	next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-	newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-	NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-	Vector3int16, require, table, type, wait,
-	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay =
-		_G, game, script, getfenv, setfenv, workspace,
-	getmetatable, setmetatable, loadstring, coroutine,
-	rawequal, typeof, print, math, warn, error,  pcall,
-	xpcall, select, rawset, rawget, ipairs, pairs,
-	next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-	newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-	NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-	Vector3int16, require, table, type, wait,
-	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay
-
+return function(Vargs)
 	local script = script
 	local service = Vargs.Service
 	local client = Vargs.Client
@@ -54,15 +21,15 @@ return function(Vargs, GetEnv)
 
 	local function RunAfterLoaded()
 		--// Report client finished loading
-		log("~! Fire client loaded")
+		client.Log("~! Fire client loaded")
 		client.Remote.Send("ClientLoaded")
 
 		--// Ping loop
-		log("~! Start ClientCheck loop");
+		client.Log("~! Start ClientCheck loop");
 		task.delay(5, function() service.StartLoop("ClientCheck", 30, Remote.CheckClient, true) end)
 
 		--// Get settings
-		log("Get settings");
+		client.Log("Get settings");
 		local settings = client.Remote.Get("Setting",{"G_API","G_Access","G_Access_Perms","Allowed_API_Calls","HelpButtonImage"})
 		if settings then
 			client.G_API = settings.G_API
@@ -72,7 +39,7 @@ return function(Vargs, GetEnv)
 			client.Allowed_API_Calls = settings.Allowed_API_Calls
 			client.HelpButtonImage = settings.HelpButtonImage
 		else
-			log("~! GET SETTINGS FAILED?")
+			client.Log("~! GET SETTINGS FAILED?")
 			warn("FAILED TO GET SETTINGS FROM SERVER");
 		end
 
@@ -82,10 +49,6 @@ return function(Vargs, GetEnv)
 	local function RunLast()
 		Remote.RunLast = nil;
 	end
-
-	getfenv().client = nil
-	getfenv().service = nil
-	getfenv().script = nil
 
 	client.Remote = {
 		Init = Init;
@@ -142,7 +105,7 @@ return function(Vargs, GetEnv)
 
 			LoadCode = function(args)
 				local code = args[1]
-				local func = Core.LoadCode(code, GetEnv())
+				local func = Core.LoadCode(code)
 				if func then
 					return func()
 				end
@@ -244,7 +207,7 @@ return function(Vargs, GetEnv)
 				local retfunc = Remote.Returnables[com]
 				local retable = retfunc and table.pack(pcall(retfunc, parms)) or {}
 				if retable[1] ~= true then
-					logError(retable[2])
+					client.LogError(retable[2])
 					Remote.Send("GiveReturn", key, "__ADONIS_RETURN_ERROR", retable[2])
 				else
 					print("SENT RETURN");
@@ -297,7 +260,7 @@ return function(Vargs, GetEnv)
 
 			LoadCode = function(args)
 				local code = args[1]
-				local func = Core.LoadCode(code, GetEnv())
+				local func = Core.LoadCode(code)
 				if func then
 					return func()
 				end
@@ -337,7 +300,7 @@ return function(Vargs, GetEnv)
 				local name = args[1]
 				local delay = args[2]
 				local code = args[3]
-				local func = Core.LoadCode(code, GetEnv())
+				local func = Core.LoadCode(code)
 				if name and delay and code and func then
 					service.StartLoop(name,delay,func)
 				end
@@ -350,14 +313,14 @@ return function(Vargs, GetEnv)
 			Function = function(args)
 				local func = client.Functions[args[1]]
 				if func and type(func) == "function" then
-					Pcall(func,unpack(args,2))
+					client.Pcall(func,unpack(args,2))
 				end
 			end;
 
 			Handler = function(args)
 				local handler = client.Handlers[args[1]]
 				if handler and type(handler) == "function" then
-					Pcall(handler, unpack(args, 2))
+					client.Pcall(handler, unpack(args, 2))
 				end
 			end;
 		};

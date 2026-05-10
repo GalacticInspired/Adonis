@@ -1,4 +1,4 @@
-return function(Vargs, env)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 
@@ -6,10 +6,8 @@ return function(Vargs, env)
 	local Functions, Commands, Admin, Anti, Core, HTTP, Logs, Remote, Process, Variables, Deps =
 		server.Functions, server.Commands, server.Admin, server.Anti, server.Core, server.HTTP, server.Logs, server.Remote, server.Process, server.Variables, server.Deps
 
-	if env then setfenv(1, env) end
-
-	local Routine = env.Routine
-	local Pcall = env.Pcall
+	local Routine = server.Routine
+	local Pcall = server.Pcall
 
 	return {
 		Glitch = {

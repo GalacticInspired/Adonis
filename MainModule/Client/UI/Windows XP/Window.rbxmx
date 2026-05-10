@@ -1225,22 +1225,12 @@ local isInFrame
 local setSize
 local apiIfy
 
-client = nil
-Pcall = nil
-Routine = nil
-service = nil
-GetEnv = nil
-
 local function isGui(child)
 	return child:IsA("GuiObject");
 end
 
 --// All global vars will be wiped/replaced except script
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-
 	--local client = service.GarbleTable(client)
 	local Player = service.Players.LocalPlayer
 	local Mouse = Player:GetMouse()
@@ -1426,12 +1416,39 @@ return function(data, env)
 		return create("TextButton", data)
 	end
 
+	local function makeHandle(rawInst)
+		if type(rawInst) == "table" then return rawInst end
+		local h = {}
+		rawset(h, "_adonisInstance", rawInst)
+		rawset(h, "SetSpecial", function(_, k, v) rawset(h, k, v) end)
+		rawset(h, "GetObject", function() return rawInst end)
+		rawset(h, "IsWrapped", function() return true end)
+		rawset(h, "GetMetatable", function() return getmetatable(h) end)
+		setmetatable(h, {
+			__index = function(t, k)
+				local v = rawget(t, k)
+				if v ~= nil then return v end
+				local iv = rawInst[k]
+				if type(iv) == "function" then
+					return function(s, ...) return rawInst[k](rawInst, ...) end
+				end
+				return iv
+			end,
+			__newindex = function(t, k, v)
+				if type(v) == "table" then
+					local raw = rawget(v, "_adonisInstance")
+					if raw then v = raw end
+				end
+				rawInst[k] = v
+			end,
+		})
+		return h
+	end
+
 	function functionify(func, object)
 		if type(func) == "string" then
 			if object then
-				local env = GetEnv()
-				env.Object = object
-				return client.Core.LoadCode(func, env)
+				return client.Core.LoadCode(func, {Object = object})
 			else
 				return client.Core.LoadCode(func)
 			end
@@ -1443,7 +1460,7 @@ return function(data, env)
 	function create(class, dataFound, existing)
 		local data = dataFound or {}
 		local class = data.Class or data.ClassName or class
-		local new = existing or (specialInsts[class] and specialInsts[class]:Clone()) or service.New(class)
+		local new = makeHandle(existing or (specialInsts[class] and specialInsts[class]:Clone()) or service.New(class))
 		local parent = data.Parent or new.Parent
 
 		if dataFound then
@@ -2089,35 +2106,27 @@ return function(data, env)
 	end
 
 	function apiIfy(gui, data, class)
-		local newGui = service.Wrap(gui)
-		gui:SetSpecial("Object", gui)
-		gui:SetSpecial("SetPosition", function(ignore, newPos) gui.Position = newPos end)
-		gui:SetSpecial("SetSize", function(ingore, newSize) gui.Size = newSize end)
-		gui:SetSpecial("Add", function(ignore, class, data)
-			if not data then data = class class = ignore end
-			local new = create(class,data);
-			new.Parent = gui;
-			return apiIfy(new, data, class)
+		if typeof(gui) == "Instance" then gui = makeHandle(gui) end
+		local rawGui = gui:GetObject()
+		rawset(gui, "Object", rawGui)
+		rawset(gui, "SetPosition", function(ignore, newPos) rawGui.Position = newPos end)
+		rawset(gui, "SetSize", function(ingore, newSize) rawGui.Size = newSize end)
+		rawset(gui, "Add", function(ignore, cls, d)
+			if not d then d = cls; cls = ignore end
+			local child = create(cls, d)
+			child:GetObject().Parent = rawGui
+			return child
 		end)
-
-		gui:SetSpecial("Copy", function(ignore, class, gotData)
+		rawset(gui, "Copy", function(ignore, cls, gotData)
 			local newData = {}
-			local new
-
-			for i,v in next,data do
-				newData[i] = v
-			end
-
-			for i,v in next,gotData do
-				newData[i] = v
-			end
-
-			new = create(class or data.Class or gui.ClassName, newData);
-			new.Parent = gotData.Parent or gui.Parent;
-			return apiIfy(new, data, class)
+			if data then for i,v in pairs(data) do newData[i] = v end end
+			if gotData then for i,v in pairs(gotData) do newData[i] = v end end
+			local child = create(cls or (data and data.Class) or rawGui.ClassName, newData)
+			child:GetObject().Parent = (gotData and gotData.Parent) or rawGui.Parent
+			return child
 		end)
-
-		return newGui
+		rawset(gui, "GetMetatable", function() return getmetatable(gui) end)
+		return gui
 	end
 
 	function doClose()
@@ -2658,7 +2667,7 @@ return function(data, env)
 	local oldNewIndex = meta.__newindex
 	local oldIndex = meta.__index
 
-	create("ScrollingFrame", nil, ScrollFrame)
+	create("ScrollingFrame", nil, api)
 	LoadChildren(api, Content)
 
 	api:SetSpecial("gTable", gTable)
@@ -2725,10 +2734,7 @@ end]]></ProtectedString>
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">NoEnv-Modifier</string>
 					<string name="ScriptGuid">{396ac619-0995-414c-a5c6-7c78f71f014a}</string>
-					<ProtectedString name="Source"><![CDATA[service = nil;
-client = nil;
-
-local function ignore(child)
+					<ProtectedString name="Source"><![CDATA[local function ignore(child)
 	--if child.Parent and child.Parent.Parent then
 	--	if child.Parent.Parent.Name == "TabFrame" then
 			--return true;
@@ -2758,9 +2764,8 @@ local function propChange(child, target, list)
 end
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
 
 	local gui = script.Parent.Parent;--data.GUI;
 

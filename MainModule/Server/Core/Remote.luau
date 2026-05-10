@@ -1,15 +1,5 @@
-server = nil
-service = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-
 --// Remote
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 
@@ -28,7 +18,7 @@ return function(Vargs, GetEnv)
 		Settings = server.Settings;
 		Defaults = server.Defaults.Settings;
 		Commands = server.Commands;
-		logError = env.logError;
+		logError = server.LogError;
 		Remote.NewDecrypt = function(str, key, cache) -- Bxor works both ways. May want to make a seperate function tho
 			return Remote.NewEncrypt(str, key, cache or Remote.NewDecodeCache)
 		end;
@@ -603,7 +593,7 @@ return function(Vargs, GetEnv)
 					Description = "Loads and runs the given lua string";
 					Function = function(p,args,data)
 						local oError = error
-						local newenv = GetEnv(getfenv(), {
+						local newenv = {
 							print = function(...) local args = table.pack(...) for i = 1, args.n do args[i] = tostring(args[i]) end Remote.Terminal.LiveOutput(p, `PRINT: {table.concat(args, " ")}`) end;
 							warn = function(...) local args = table.pack(...) for i = 1, args.n do args[i] = tostring(args[i]) end Remote.Terminal.LiveOutput(p, `WARN: {table.concat(args, " ")}`) end;
 							error = function(reason, level)
@@ -614,7 +604,7 @@ return function(Vargs, GetEnv)
 								Remote.Terminal.LiveOutput(p, `LUA_DEMAND_ERROR: {reason}`)
 								oError(`Adonis terminal error: {reason}`, (level or 1) + 1)
 							end;
-						})
+						}
 
 						if not Remote.RemoteExecutionConfirmed[tostring(p.UserId)] then
 							local ans = Remote.GetGui(p, "YesNoPrompt", {
@@ -999,7 +989,7 @@ return function(Vargs, GetEnv)
 					local Variable = se[Name]
 
 					local oError = error
-					local newenv = GetEnv(getfenv(), {
+					local newenv = {
 						print = function(...) local args = table.pack(...) for i = 1, args.n do args[i] = tostring(args[i]) end Remote.Terminal.LiveOutput(p, `PRINT: {table.concat(args, " ")}`) end;
 						warn = function(...) local args = table.pack(...) for i = 1, args.n do args[i] = tostring(args[i]) end Remote.Terminal.LiveOutput(p, `WARN: {table.concat(args, " ")}`) end;
 						error = function(reason, level)
@@ -1010,7 +1000,7 @@ return function(Vargs, GetEnv)
 							Remote.MakeGui(p, "Output", {Title = 'LUA_DEMAND_ERROR'; Message = `{reason}`})
 							oError(`Adonis ScriptEditor error: {reason}`, (level or 1) + 1)
 						end;
-					})
+					}
 
 					-- TODO: Maybe make it not work with the server Env?
 					service.TrackTask(`Thread: ScriptEditor: {p.UserId}: {Name}`, function()

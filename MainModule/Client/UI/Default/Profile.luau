@@ -1,19 +1,13 @@
 local DateTime = DateTime
-client, service, Routine = nil, nil, nil
 
 local function boolToStr(bool)
 	return bool and "Yes" or "No"
 end
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-
-	local client = client
-	local service = client.Service
-
-	local Routine = Routine
+	local client = env.client
+	local service = env.service
+	local Routine = env.Routine
 
 	local player: Player = data.Target
 

@@ -1,5 +1,3 @@
-client, service = nil, nil
-
 local function boolToStr(bool)
 	if bool then
 		return "Yes"
@@ -9,9 +7,8 @@ local function boolToStr(bool)
 end
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
 
 	local genPlayerList = nil
 	local genWorkspaceInfo = nil

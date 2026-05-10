@@ -1,10 +1,8 @@
 local buffer = buffer -- // Adonis doesnt support buffers yet!
-client, service = nil, nil
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
 
 	local Variables = client.Variables
 	local mouse = service.Players.LocalPlayer:GetMouse()
@@ -77,7 +75,7 @@ return function(data, env)
 		else
 			local pixel = pointer:Clone()
 			pixel.Name = "Pixel"
-			pixel.Parent = canvas
+			pixel.Parent = canvas:GetObject()
 			pixelCount.Text = `Pixels: {pixelCount.Text:sub(9) + 1}`
 		end
 	end)

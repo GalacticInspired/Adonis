@@ -1,8 +1,5 @@
 --// Function stuff
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
+return function(Vargs)
 	local server = Vargs.Server
 	local service = Vargs.Service
 
@@ -389,10 +386,7 @@ return function(Vargs, GetEnv)
 		};
 
 		GetFakePlayer = function(options)
-			local fakePlayer = service.Wrap(service.New("Folder", {
-				Name = options.Name or "Fake_Player";
-				Archivable = false;
-			}))
+			local fakePlayer = {}
 
 			local data = {
 				ClassName = "Player";
@@ -414,7 +408,7 @@ return function(Vargs, GetEnv)
 				GetRankInGroup = function() return 0 end;
 				GetRoleInGroup = function() return "Guest" end;
 				IsFriendsWith = function() return false end;
-				Kick = function() fakePlayer:SetSpecial("Parent", nil) fakePlayer:Destroy() end;
+				Kick = function() fakePlayer.Parent = nil end;
 				IsA = function(_, className) return className == "Player" or className == "Instance" end;
 			}
 
@@ -433,7 +427,7 @@ return function(Vargs, GetEnv)
 			data.ToString = data.Name
 
 			for k, v in data do
-				fakePlayer:SetSpecial(k, v)
+				fakePlayer[k] = v
 			end
 
 			return fakePlayer

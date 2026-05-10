@@ -1,15 +1,8 @@
-client = nil
-Pcall = nil
-Routine = nil
-service = nil
-gTable = nil
-
 --// All global vars will be wiped/replaced except script
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
 
 	local playergui = service.PlayerGui
 	local localplayer = service.Players.LocalPlayer

@@ -2,7 +2,7 @@
 type Card = {id: string, name: string, desc: string, labels: {any}?}
 type List = {id: string, name: string, cards: {Card}}
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 

@@ -1,15 +1,12 @@
 --// Processing
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
+return function(Vargs)
 	local server = Vargs.Server
 	local service = Vargs.Service
 
 	local Commands, Decrypt, Encrypt, AddLog, TrackTask, Pcall
 	local Functions, Admin, Anti, Core, HTTP, Logs, Remote, Process, Variables, Settings, Defaults
-	local logError = env.logError
-	local Routine = env.Routine
+	local logError = server.LogError
+	local Routine = server.Routine
 	local function Init()
 		Functions = server.Functions;
 		Admin = server.Admin;
@@ -23,8 +20,8 @@ return function(Vargs, GetEnv)
 		Settings = server.Settings;
 		Defaults = server.Defaults;
 
-		logError = logError or env.logError;
-		Routine = Routine or env.Routine;
+		logError = logError or server.LogError;
+		Routine = Routine or server.Routine;
 		Commands = Remote.Commands
 		Decrypt = Remote.NewDecrypt
 		Encrypt = Remote.NewEncrypt

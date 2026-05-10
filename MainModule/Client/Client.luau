@@ -26,7 +26,7 @@ local CORE_LOADING_ORDER = table.freeze({
 })
 
 --// Loccalllsssss
-local _G, game, script, getfenv, setfenv, workspace,
+local _G, game, script, workspace,
 getmetatable, setmetatable, loadstring, coroutine,
 rawequal, typeof, print, math, warn, error,  pcall,
 xpcall, select, rawset, rawget, ipairs, pairs,
@@ -36,7 +36,7 @@ NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
 NumberSequenceKeypoint, PhysicalProperties, Region3int16,
 Vector3int16, require, table, type, wait,
 Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, spawn, delay, task, assert, debug, tick =
-	_G, game, script, getfenv, setfenv, workspace,
+	_G, game, script, workspace,
 getmetatable, setmetatable, loadstring, coroutine,
 rawequal, typeof, print, math, warn, error,  pcall,
 xpcall, select, rawset, rawget, ipairs, pairs,
@@ -103,13 +103,10 @@ game:GetService("NetworkClient").ChildRemoved:Connect(function(p)
 end)
 
 local unique = {}
-local origEnv = getfenv()
-setfenv(1, setmetatable({}, { __metatable = unique }))
 local startTime = time()
 local oldInstNew = Instance.new
 local oldFromExisting = Instance.fromExisting
 local oldReq = require
-local locals = {}
 local client = {}
 local service = {}
 local ServiceSpecific = {}
@@ -194,24 +191,6 @@ do
 	end)
 end
 
-local GetEnv
-GetEnv = function(env, repl)
-	local scriptEnv = setmetatable({}, {
-		__index = function(tab, ind)
-			return (locals[ind] or (env or origEnv)[ind])
-		end,
-
-		__metatable = if Folder:FindFirstChild("ADONIS_DEBUGMODE_ENABLED") then nil else unique,
-	})
-
-	if repl and type(repl) == "table" then
-		for ind, val in repl do
-			scriptEnv[ind] = val
-		end
-	end
-
-	return scriptEnv
-end
 
 local GetVargTable = function()
 	return {
@@ -226,9 +205,9 @@ local LoadModule = function(module, yield, envVars, noEnv)
 	local plugran, plug
 
 	if isRaw then
-		plugran, plug = pcall(assert(assert(client.Core.Loadstring, "Cannot compile plugin due to Core.Loadstring missing")(module, GetEnv({}, envVars)), "Failed to compile module"))
+		plugran, plug = pcall(assert(assert(client.Core.Loadstring, "Cannot compile plugin due to Core.Loadstring missing")(module), "Failed to compile module"))
 	elseif isValue then
-		plugran, plug = pcall(client.Core.LoadCode or function(...) return require(client.Shared.FiOne, true)(...) end, client.Functions.Base64Decode(module.Value), GetEnv({}, envVars))
+		plugran, plug = pcall(client.Core.LoadCode or function(...) return require(client.Shared.FiOne, true)(...) end, client.Functions.Base64Decode(module.Value))
 	else
 		plugran, plug = pcall(require, module)
 	end
@@ -238,22 +217,20 @@ local LoadModule = function(module, yield, envVars, noEnv)
 			if yield then
 				local ran, err = service.TrackTask(
 					`Plugin: {module}`,
-					((noEnv or isRaw or isValue) and plug) or setfenv(plug, GetEnv(getfenv(plug), envVars)),
+					plug,
 					function(err)
 						warn(`Module encountered an error while loading: {module}\n{err}\n{debug.traceback()}`)
 					end,
-					GetVargTable(),
-					GetEnv
+					GetVargTable()
 				)
 			else
 				local ran, err = service.TrackTask(
 					`Thread: Plugin: {module}`,
-					((noEnv or isRaw or isValue) and plug) or setfenv(plug, GetEnv(getfenv(plug), envVars)),
+					plug,
 					function(err)
 						warn(`Module encountered an error while loading: {module}\n{err}\n{debug.traceback()}`)
 					end,
-					GetVargTable(),
-					GetEnv
+					GetVargTable()
 				)
 			end
 		else
@@ -304,19 +281,6 @@ client = setmetatable({
 	end,
 })
 
-locals = {
-	Pcall = Pcall,
-	GetEnv = GetEnv,
-	client = client,
-	Folder = Folder,
-	Routine = Routine,
-	service = service,
-	logError = logError,
-	origEnv = origEnv,
-	log = log,
-	dumplog = dumplog,
-}
-
 log("Create service metatable")
 
 service = require(Folder.Parent.Shared.Service)(function(eType, msg, desc, ...)
@@ -344,7 +308,7 @@ end, function(c, parent, tab)
 	if not isModule(c) and c ~= script and c ~= Folder and parent == nil then
 		tab.UnHook()
 	end
-end, ServiceSpecific, GetEnv(nil, { client = client }))
+end, ServiceSpecific, client)
 
 --// Localize
 log("Localize")
@@ -378,115 +342,15 @@ Axes = Localize(Axes)
 task = Localize(task)
 debug = Localize(debug)
 
---// Wrap
-log("Wrap")
-
-local service_Wrap = service.Wrap
-local service_UnWrap = service.UnWrap
-
-for i, val in service do
-	if type(val) == "userdata" then
-		service[i] = service_Wrap(val, true)
-	end
-end
-
---// Folder Wrap
-Folder = service_Wrap(Folder, true)
-
---// Global Wrapping
-Enum = service_Wrap(Enum, true)
 rawequal = service.RawEqual
-script = service_Wrap(script, true)
-game = service_Wrap(game, true)
-workspace = service_Wrap(workspace, true)
-Instance = {
-	new = function(obj, parent)
-		return service_Wrap(oldInstNew(obj, service_UnWrap(parent)), true)
-	end,
-	fromExisting = function(existingInstance: Instance)
-		return service_Wrap(oldFromExisting(service_UnWrap(existingInstance)))
-	end
-}
 require = function(obj, noWrap: boolean?)
-	return if noWrap == true then oldReq(service_UnWrap(obj)) else service_Wrap(oldReq(service_UnWrap(obj)), true)
+	return oldReq(service.UnWrap(obj))
 end
 
 client.Service = service
-client.Module = service_Wrap(client.Module, true)
-
---// Setting things up
-log("Setting things up")
-for ind, loc in
-	{
-		_G = _G,
-		game = game,
-		spawn = spawn,
-		script = script,
-		getfenv = getfenv,
-		setfenv = setfenv,
-		workspace = workspace,
-		getmetatable = getmetatable,
-		setmetatable = setmetatable,
-		loadstring = loadstring,
-		coroutine = coroutine,
-		rawequal = rawequal,
-		typeof = typeof,
-		print = print,
-		math = math,
-		warn = warn,
-		error = error,
-		assert = assert,
-		pcall = pcall,
-		xpcall = xpcall,
-		select = select,
-		rawset = rawset,
-		rawget = rawget,
-		ipairs = ipairs,
-		pairs = pairs,
-		next = next,
-		Rect = Rect,
-		Axes = Axes,
-		os = os,
-		time = time,
-		Faces = Faces,
-		delay = delay,
-		unpack = unpack,
-		string = string,
-		Color3 = Color3,
-		newproxy = newproxy,
-		tostring = tostring,
-		tonumber = tonumber,
-		Instance = Instance,
-		TweenInfo = TweenInfo,
-		BrickColor = BrickColor,
-		NumberRange = NumberRange,
-		ColorSequence = ColorSequence,
-		NumberSequence = NumberSequence,
-		ColorSequenceKeypoint = ColorSequenceKeypoint,
-		NumberSequenceKeypoint = NumberSequenceKeypoint,
-		PhysicalProperties = PhysicalProperties,
-		Region3int16 = Region3int16,
-		Vector3int16 = Vector3int16,
-		require = require,
-		table = table,
-		type = type,
-		wait = wait,
-		Enum = Enum,
-		UDim = UDim,
-		UDim2 = UDim2,
-		Vector2 = Vector2,
-		Vector3 = Vector3,
-		Region3 = Region3,
-		CFrame = CFrame,
-		Ray = Ray,
-		task = task,
-		tick = tick,
-		debug = debug,
-		service = service,
-	}
-do
-	locals[ind] = loc
-end
+client.Module = client.Module
+client.Require = require
+client.Log = log
 
 --// Init
 log("Return init function")
@@ -495,7 +359,7 @@ return service.NewProxy({
 		log("Begin init")
 
 		local remoteName, depsName = string.match(data.Name, "(.*)\\(.*)")
-		Folder = service.Wrap(data.Folder --[[or folder and folder:Clone()]] or Folder)
+		Folder = data.Folder or Folder
 
 		if Folder:FindFirstChild("ADONIS_DEBUGMODE_ENABLED") then
 			data.DebugMode = true
@@ -510,9 +374,6 @@ return service.NewProxy({
 			end
 		end
 
-		log("Clearing environment")
-		setfenv(1, setmetatable({}, { __metatable = unique }))
-
 		log("Loading necessary client values")
 		client.Folder = Folder
 		client.UIFolder = Folder:WaitForChild("UI", 9e9)
@@ -526,8 +387,8 @@ return service.NewProxy({
 		client.RemoteName = remoteName
 		client.DebugMode = data.DebugMode
 
-		client.Typechecker = oldReq(service_UnWrap(client.Shared.Typechecker))
-		client.Changelog = oldReq(service_UnWrap(client.Shared.Changelog))
+		client.Typechecker = oldReq(service.UnWrap(client.Shared.Typechecker))
+		client.Changelog = oldReq(service.UnWrap(client.Shared.Changelog))
 		client.FormattedChangelog = table.create(#client.Changelog)
 
 		--// Create formatted changelog from standard changelog
@@ -555,7 +416,7 @@ return service.NewProxy({
 		--// Setup MatIcons
 		log("Setting up material icons")
 		do
-			local MaterialIcons = oldReq(service_UnWrap(client.Shared.MatIcons))
+			local MaterialIcons = oldReq(service.UnWrap(client.Shared.MatIcons))
 			client.MatIcons = setmetatable({}, {
 				__index = function(self, ind)
 					local materialIcon = MaterialIcons[ind]

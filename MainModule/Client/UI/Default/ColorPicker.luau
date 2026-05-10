@@ -1,10 +1,7 @@
-client, service = nil, nil
-
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-	
+	local client = env.client
+	local service = env.service
+
 	local color = data.Color or Color3.new(1, 1, 1)
 	local red, green, blue = color.r, color.g, color.b
 	local redSlider, greenSlider, blueSlider

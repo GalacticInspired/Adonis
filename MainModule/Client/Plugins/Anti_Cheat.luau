@@ -7,14 +7,10 @@ task.spawn(function()
 	end
 end)
 
-GetEnv = nil
-
 return function(Vargs)
 	local client, service = Vargs.Client, Vargs.Service
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
 
-	local _G, game, script, getfenv, setfenv, workspace,
+	local _G, game, script, workspace,
 	getmetatable, setmetatable, loadstring, coroutine,
 	rawequal, typeof, print, math, warn, error,  pcall,
 	xpcall, select, rawset, rawget, ipairs, pairs,
@@ -24,7 +20,7 @@ return function(Vargs)
 	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
 	Vector3int16, require, table, type, wait,
 	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay =
-		_G, game, script, getfenv, setfenv, workspace,
+		_G, game, script, workspace,
 	getmetatable, setmetatable, loadstring, coroutine,
 	rawequal, typeof, print, math, warn, error,  pcall,
 	xpcall, select, rawset, rawget, ipairs, pairs,
@@ -54,9 +50,6 @@ return function(Vargs)
 	local Process = client.Process;
 	local Detected = Anti.Detected;
 
-	getfenv().client = nil
-	getfenv().service = nil
-	getfenv().script = nil
 	script.Parent = nil
 	local compareTables
 	compareTables = function(t1, t2)

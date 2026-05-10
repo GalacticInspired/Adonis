@@ -2,7 +2,7 @@
 --// Most of this only runs when DebugMode is enabled
 --// NOTE: THIS IS NOT A *CONFIG/USER* PLUGIN! ANYTHING IN THE MAINMODULE PLUGIN FOLDERS IS ALREADY PART OF/LOADED BY THE SCRIPT! DO NOT ADD THEM TO YOUR CONFIG>PLUGINS FOLDER!
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 
@@ -384,7 +384,7 @@ local service = wrappedEnv.Service
 				Delay = 5;
 			}) As this is only available within DebugMode now, this has no real usecase. ]]
 			--if ans == "Yes" then
-			local func,err = Core.Loadstring(args[1],GetEnv())
+			local func,err = Core.Loadstring(args[1])
 			if func then
 				func()
 				Functions.Hint("Ran script", {plr}, 3)

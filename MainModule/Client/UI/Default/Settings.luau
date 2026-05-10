@@ -1,11 +1,5 @@
-client, service = nil, nil
-
 return function(data, env)
 	local gTable
-
-	if env then
-		setfenv(1, env)
-	end
 
 	local client = env.client
 	local service = env.service

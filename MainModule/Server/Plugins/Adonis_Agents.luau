@@ -3,7 +3,7 @@ local AGENT_COMMANDS = {
 	"ChatLogs", "RemoteLogs", "ScriptLogs", "ErrorLogs"
 }
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 

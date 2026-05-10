@@ -1,42 +1,10 @@
 --# selene: allow(empty_loop)
-client = nil
-service = nil
-Pcall = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-
 --// Anti-Exploit
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
-	local _G, game, script, getfenv, setfenv, workspace,
-	getmetatable, setmetatable, loadstring, coroutine,
-	rawequal, typeof, print, math, warn, error,  pcall,
-	xpcall, select, rawset, rawget, ipairs, pairs,
-	next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-	newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-	NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-	Vector3int16, require, table, type, wait,
-	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay =
-		_G, game, script, getfenv, setfenv, workspace,
-	getmetatable, setmetatable, loadstring, coroutine,
-	rawequal, typeof, print, math, warn, error,  pcall,
-	xpcall, select, rawset, rawget, ipairs, pairs,
-	next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-	newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-	NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-	Vector3int16, require, table, type, wait,
-	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay
-
+return function(Vargs)
 	local Anti, Process, UI, Variables
 	local script = script
-	local service = env.service
-	local client = env.client
+	local service = Vargs.Service
+	local client = Vargs.Client
 	local Core = client.Core
 	local Remote = client.Remote
 	local Functions = client.Functions
@@ -73,10 +41,6 @@ return function(Vargs, GetEnv)
 	local function RunLast()
 		Anti.RunLast = nil;
 	end
-
-	getfenv().client = nil
-	getfenv().service = nil
-	getfenv().script = nil
 
 	local Detected = function(action, info, nocrash)
 		if NetworkClient and action ~= "_" then
@@ -411,7 +375,7 @@ return function(Vargs, GetEnv)
 			end
 		end)
 
-		Routine(function()
+		client.Routine(function()
 			while true do
 				do
 					local source, line, argN, isVararg, name, closure = debug.info(Detected, "slanf")

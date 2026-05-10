@@ -1,16 +1,6 @@
-server = nil
-service = nil
-Pcall = nil
-Routine = nil
-GetEnv = nil
-logError = nil
-
 --// Commands
 --// Highly recommended you disable Intellesense before editing this...
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
+return function(Vargs)
 	local server = Vargs.Server
 	local service = Vargs.Service
 
@@ -177,10 +167,9 @@ return function(Vargs, GetEnv)
 
 		--// Load command modules
 		if server.CommandModules then
-			local env = GetEnv()
 			for i, module in server.CommandModules:GetChildren() do
 				local func = require(module)
-				local ran, tab = pcall(func, Vargs, env)
+				local ran, tab = pcall(func, Vargs)
 
 				if ran and tab and type(tab) == "table" then
 					for ind, cmd in tab do
@@ -206,12 +195,8 @@ return function(Vargs, GetEnv)
 		--// Cache admin commands
 		Admin.CacheCommands()
 
-		local commandEnv = GetEnv(nil, {
-			script = server.Config and server.Config:FindFirstChild("Settings") or script;
-		})
 		for ind, cmd in Settings.Commands or {} do
 			if type(cmd) == "table" and cmd.Function then
-				setfenv(cmd.Function, commandEnv)
 				Commands[ind] = cmd
 			end
 		end

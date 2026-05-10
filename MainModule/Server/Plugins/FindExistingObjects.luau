@@ -4,7 +4,7 @@
 	Date: 4/3/2022
 --]]
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 

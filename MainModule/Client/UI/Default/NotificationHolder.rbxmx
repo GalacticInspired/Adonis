@@ -36,17 +36,11 @@
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Code</string>
 					<string name="ScriptGuid">{F0D5FB93-FA57-4B66-A909-AB8E927063C7}</string>
-					<ProtectedString name="Source"><![CDATA[client = nil
-Pcall = nil
-Routine = nil
-service = nil
-gTable = nil
+					<ProtectedString name="Source"><![CDATA[return function(data, env)
+	local client = env.client
+	local service = env.service
+	local gTable = env.gTable
 
-return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-	
 	local gui = script.Parent.Parent
 	local ScrollingFrame = gui.ScrollingFrame
 	local UIListLayout = ScrollingFrame.UIListLayout

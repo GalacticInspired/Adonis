@@ -1,12 +1,10 @@
-return function(Vargs, env)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 
 	local Settings = server.Settings
 	local Functions, Commands, Admin, Anti, Core, HTTP, Logs, Remote, Process, Variables, Deps =
 		server.Functions, server.Commands, server.Admin, server.Anti, server.Core, server.HTTP, server.Logs, server.Remote, server.Process, server.Variables, server.Deps
-
-	if env then setfenv(1, env) end
 
 	return {
 		DirectBan = {
@@ -298,7 +296,7 @@ return function(Vargs, env)
 					assert(se[Name], "No script found")
 
 					local oError = error
-					local newenv = setfenv(getfenv(),{
+					local newenv = setmetatable({
 						print = function(...) local args, str = table.pack(...), "" for i = 1, args.n do str ..= `{(i > 1 and " " or "")}{args[i]}` end Remote.MakeGui(plr, "Output",{Title = "WARN"; Message = `{str}`}) end;
 						warn = function(...) local args, str = table.pack(...), "" for i = 1, args.n do str ..= `{(i > 1 and " " or "")}{args[i]}` end Remote.MakeGui(plr, "Output",{Title = "WARN"; Message = `{str}`}) end;
 						error = function(reason, level)
@@ -309,7 +307,7 @@ return function(Vargs, env)
 							Remote.MakeGui(plr, "Output",{Title = "LUA_DEMAND_ERROR"; Message = `LUA_DEMAND_ERROR: {reason}`})
 							oError(`Adonis ScriptEditor error: {reason}`, (level or 1) + 1)
 						end;
-					})
+					}, {__index = _G})
 
 					service.TrackTask(`Thread: ScriptEditor: {plr.UserId}: {Name}`,function()
 						local func,err = Core.Loadstring(se[Name]["Script"], newenv)

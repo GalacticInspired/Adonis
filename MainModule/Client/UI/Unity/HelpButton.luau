@@ -1,9 +1,3 @@
-client = nil
-Pcall = nil
-Routine = nil
-service = nil
-gTable = nil
-
 --// All global vars will be wiped/replaced except script
 
 --[[ This HelpButton Theme displays by default the headshot of the LocalPlayer.
@@ -13,9 +7,9 @@ gTable = nil
           }
 --]]
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
+
 	local playergui = service.PlayerGui
 	local localplayer = service.Players.LocalPlayer
 	local gui = service.New("ScreenGui")

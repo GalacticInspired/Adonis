@@ -1,10 +1,7 @@
-client, service = nil, nil
-
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-	
+	local client = env.client
+	local service = env.service
+
 	local gTable
 	local tLimit = data.Time
 	local sImg
@@ -74,8 +71,8 @@ return function(data, env)
 		BackgroundTransparency = 1;
 	})
 
-	tock.Parent = label
-	buzzer.Parent = label
+	tock.Parent = label:GetObject()
+	buzzer.Parent = label:GetObject()
 	gTable = window.gTable
 	gTable:Ready()
 

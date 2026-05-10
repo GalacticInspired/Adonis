@@ -42,20 +42,13 @@
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">NoEnv-Code</string>
 					<string name="ScriptGuid">{9E936207-7E57-4E10-9696-6E9265116B66}</string>
-					<ProtectedString name="Source"><![CDATA[client = nil
-Pcall = nil
-Routine = nil
-service = nil
-gTable = nil
-
---// All global vars will be wiped/replaced except script
+					<ProtectedString name="Source"><![CDATA[--// All global vars will be wiped/replaced except script
 --// All guis are autonamed client.Variables.CodeName..gui.Name
 --// Be sure to update the console gui's code if you change stuff
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
 
 	if not data.Message then return end
 

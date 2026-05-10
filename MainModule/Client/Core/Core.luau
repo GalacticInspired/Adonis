@@ -1,38 +1,5 @@
-client = nil
-service = nil
-Pcall = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-log = nil
-
 --// Core
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
-	local _G, game, script, getfenv, setfenv, workspace,
-		getmetatable, setmetatable, loadstring, coroutine,
-		rawequal, typeof, print, math, warn, error,  pcall,
-		xpcall, select, rawset, rawget, ipairs, pairs,
-		next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-		newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-		NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-		NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-		Vector3int16, require, table, type, wait,
-		Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay =
-		_G, game, script, getfenv, setfenv, workspace,
-		getmetatable, setmetatable, loadstring, coroutine,
-		rawequal, typeof, print, math, warn, error,  pcall,
-		xpcall, select, rawset, rawget, ipairs, pairs,
-		next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-		newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-		NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-		NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-		Vector3int16, require, table, type, wait,
-		Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay
-
+return function(Vargs)
 	local script = script
 	local service = Vargs.Service
 	local client = Vargs.Client
@@ -78,10 +45,6 @@ return function(Vargs, GetEnv)
 		Core.RunLast = nil
 	end
 
-	getfenv().client = nil
-	getfenv().service = nil
-	getfenv().script = nil
-
 	client.Core = {
 		Init = Init;
 		RunLast = RunLast;
@@ -93,7 +56,7 @@ return function(Vargs, GetEnv)
 
 		GetEvent = function()
 			if Core.RemoteEvent then
-				log("Disconnect old RemoteEvent")
+				client.Log("Disconnect old RemoteEvent")
 
 				for name,event in Core.RemoteEvent.Events do
 					event:Disconnect()
@@ -102,7 +65,7 @@ return function(Vargs, GetEnv)
 				Core.RemoteEvent = nil;
 			end
 
-			log("Getting RemoteEvent");
+			client.Log("Getting RemoteEvent");
 
 			local eventData = {}
 			local remoteParent = service.ReplicatedStorage;
@@ -111,7 +74,7 @@ return function(Vargs, GetEnv)
 			if not event then
 				Anti.Detected("Kick", "RemoteEvent Not Found");
 			else
-				log("Getting RemoteFunction");
+				client.Log("Getting RemoteFunction");
 
 				local rFunc = event:WaitForChild("__FUNCTION", 120);
 
@@ -131,7 +94,7 @@ return function(Vargs, GetEnv)
 					events.ParentChildRemoved = remoteParent.ChildRemoved:Connect(function(child)
 						if (Core.RemoteEvent == eventData) and child == event and task.wait() then
 							warn("::ADONIS:: REMOTE EVENT REMOVED? RE-GRABBING");
-							log("~! REMOTEEVENT WAS REMOVED?")
+							client.Log("~! REMOTEEVENT WAS REMOVED?")
 							Core.GetEvent();
 						end
 					end)
@@ -139,7 +102,7 @@ return function(Vargs, GetEnv)
 					Core.RemoteEvent = eventData
 
 					if not Core.Key then
-						log("~! Getting key from server")
+						client.Log("~! Getting key from server")
 						Core.Key = Remote.Get(`{client.DepsName}GET_KEY`)
 						if Core.Key then
 							client.Finish_Loading()
@@ -155,12 +118,11 @@ return function(Vargs, GetEnv)
 
 		LoadPlugin = function(plugin)
 			local plug = require(plugin)
-			local func = setfenv(plug,GetEnv(getfenv(plug)))
-			task.spawn(Pcall, func)
+			task.spawn(client.Pcall, plug)
 		end;
 
 		LoadBytecode = function(str, env)
-			return require(client.Shared.FiOne, true)(str, env)
+			return client.Require(client.Shared.FiOne, true)(str, env)
 		end;
 
 		LoadCode = function(str, env)
@@ -195,20 +157,17 @@ return function(Vargs, GetEnv)
 			local table = table
 			local rawset = rawset
 			local rawget = rawget
-			local getfenv = getfenv
-			local setfenv = setfenv
 			local require = require
 			local tostring = tostring
 			local client = client
-			local Routine = Routine
-			local Pcall = Pcall
+			local Routine = client.Routine
+			local Pcall = client.Pcall
 
 			--// Get Settings
 			local API_Special = {
 
 			}
 
-			setfenv(1,setmetatable({}, {__metatable = getmetatable(getfenv())}))
 
 			local API_Specific = {
 				API_Specific = {
@@ -230,8 +189,7 @@ return function(Vargs, GetEnv)
 					local ind = args[2]
 					local targ
 
-					setfenv(1,setmetatable({}, {__metatable = getmetatable(getfenv())}))
-
+		
 					if API_Specific[ind] then
 						targ = API_Specific[ind]
 					elseif client[ind] and client.Allowed_API_Calls[ind] then

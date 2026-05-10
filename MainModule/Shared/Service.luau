@@ -1,9 +1,3 @@
-server = nil
-client = nil
-Pcall = nil
-Routine = nil
-logError = nil
-Folder = nil
 
 local main
 local ErrorHandler
@@ -38,10 +32,8 @@ local methods = setmetatable({}, {
 })
 
 
-return function(errorHandler, eventChecker, fenceSpecific, env)
-	if env then setfenv(1, env) end
-
-	local _G, game, script, getfenv, setfenv, workspace,
+return function(errorHandler, eventChecker, fenceSpecific, mainRef)
+	local _G, game, script, workspace,
 	getmetatable, setmetatable, loadstring, coroutine,
 	rawequal, typeof, print, math, warn, error,  pcall,
 	xpcall, select, rawset, rawget, ipairs, pairs,
@@ -51,7 +43,7 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 	NumberSequenceKeypoint, PhysicalProperties, Region3int16,
 	Vector3int16, require, table, type, wait,
 	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay, spawn, task, tick =
-		_G, game, script, getfenv, setfenv, workspace,
+		_G, game, script, workspace,
 	getmetatable, setmetatable, loadstring, coroutine,
 	rawequal, typeof, print, math, warn, error,  pcall,
 	xpcall, select, rawset, rawget, ipairs, pairs,
@@ -62,13 +54,14 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 	Vector3int16, require, table, type, task.wait,
 	Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, task.delay, task.defer, task, tick;
 
-	main = server or client
+	main = mainRef
 	ErrorHandler = errorHandler
 
-	server = nil
-	client = nil
+	local isClient = game:GetService("RunService"):IsClient()
+	local server = (not isClient) and mainRef or nil
+	local client = isClient and mainRef or nil
 
-	local Routine = env.Routine
+	local Routine = function(func, ...) return coroutine.resume(coroutine.create(func), ...) end
 
 	local service
 	local passOwnershipCache = {}
@@ -96,17 +89,17 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 	local Wrappers = setmetatable({}, {__mode = "kv"})
 
 	local oldInstNew = Instance.new
-	local WrapService = Instance.new("Folder")
-	local ThreadService = Instance.new("Folder")
-	local HelperService = Instance.new("Folder")
-	local EventService = Instance.new("Folder")
+	local WrapService = {}
+	local ThreadService = {}
+	local HelperService = {}
+	local EventService = {}
 
-	local Instance = {new = function(obj, parent) local obj = oldInstNew(obj) if parent then obj.Parent = service.UnWrap(parent) end return service and client and service.Wrap(obj, true) or obj end}
+	local Instance = {new = function(obj, parent) local obj = oldInstNew(obj) if parent then obj.Parent = parent end return obj end}
 	local Events = {
 		TrackTask = function(name, func, errHandler, ...)
 			if type(errHandler) ~= "function" or select("#", ...) == 0 and errHandler == nil then
 				errHandler = function(reason)
-					logError(reason.."\n"..debug.traceback())
+					if main and main.LogError then main.LogError(reason.."\n"..debug.traceback()) else warn(reason.."\n"..debug.traceback()) end
 				end
 			end
 			local index = game:GetService("HttpService"):GenerateGUID(false)
@@ -409,150 +402,46 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 			end
 		end;
 		Wrapped = function(object)
-			if type(getmetatable(object)) == "table" and rawget(getmetatable(object), "__ADONIS_WRAPPED") or getmetatable(object) == "Adonis_Proxy" then
-				return true
-			elseif (type(object) == "table" or typeof(object) == "userdata") and object.IsProxy and object:IsProxy() then
-				return true
-			else
-				return false
-			end
+			return type(object) == "table" and rawget(object, "_adonisInstance") ~= nil
 		end;
 		UnWrap = function(object)
-			local OBJ_Type = typeof(object)
-
-			if OBJ_Type == "Instance" then
-				return object
-			elseif OBJ_Type == "table" then
-				local UnWrap = service.UnWrap
-				local tab = {}
-				for i, v in object do
-					tab[i] = UnWrap(v)
-				end
-				return tab
-			elseif service.Wrapped(object) then
-				return object:GetObject()
-			else
-				return object
+			if type(object) == "table" then
+				local inst = rawget(object, "_adonisInstance")
+				if inst then return inst end
 			end
+			return object
 		end;
 		Wrap = function(object, fullWrap)
-			fullWrap = fullWrap or (fullWrap == nil and client ~= nil) --// Everything clientside should be getting wrapped anyway
-			if getmetatable(object) == "Ignore" or getmetatable(object) == "ReadOnly_Table" then
-				return object
-			elseif Wrappers[object] then
-				return Wrappers[object]
-			elseif type(object) == "table" then
-				local Wrap = service.Wrap
-				local tab = setmetatable({}, {
-					__eq = function(tab,val)
-						return object
-					end
-				})
-				for i,v in object do
-					tab[i] = Wrap(v, fullWrap)
-				end
-				return tab
-			--[[elseif type(object) == "function" then
-				return function(...)
-					pcall(setfenv, object, getfenv())
-					return unpack(service.Wrap({object(...)}))
-				end--]]
-			elseif (typeof(object) == "Instance" or typeof(object) == "RBXScriptSignal" or typeof(object) == "RBXScriptConnection") and not service.Wrapped(object) then
-				local UnWrap = service.UnWrap
-				local sWrap = service.Wrap
-
-				local Wrap = (not fullWrap and function(...)
-					return ...
-				end) or function(obj)
-					return sWrap(obj, fullWrap)
-				end
-
-				local newObj = newproxy(true)
-				local newMeta = getmetatable(newObj)
-
-				local custom; custom = {
-					GetMetatable = function()
-						return newMeta
-					end;
-
-					AddToCache = function()
-						Wrappers[object] = newObj;
-					end;
-
-					RemoveFromCache = function()
-						Wrappers[object] = nil
-					end;
-
-					GetObject = function()
-						return object
-					end;
-
-					SetSpecial = function(ignore, name, val)
-						custom[name] = val
-						return custom
-					end;
-
-					Clone = function(self, noAdd)
-						local new = object:Clone()
-						if not noAdd then
-							table.insert(CreatedItems, new)
-						end
-						return sWrap(new)
-					end;
-
-					IsWrapped = function()
-						return true -- Cannot fully depend on __metatable if DebugMode is enabled
-					end;
-
-					Connect = function(ignore, func)
-						return Wrap(object:Connect(function(...)
-							local packedResult = table.pack(...)
-							return func(unpack(sWrap(packedResult), 1, packedResult.n))
-						end))
-					end;
-
-					Wait = function(ignore,...)
-						return Wrap(object.Wait)(object, ...)
-					end;
-				}
-
-				custom.connect = custom.Connect
-				custom.wait = custom.Wait
-
-				newMeta.__index = function(tab, ind)
-					local target = custom[ind] or object[ind]
-
-					if custom[ind] then
-						return custom[ind]
-					elseif type(target) == "function" then
-						return function(ignore, ...)
-							local packedResult = table.pack(...)
-							return unpack(Wrap({
-								methods[ind](object, unpack(UnWrap(packedResult), 1, packedResult.n))
-							}))
-						end
-					else
-						return Wrap(target)
-					end
-				end
-
-				newMeta.__newindex = function(tab, ind, val)
-					object[ind] = UnWrap(val)
-				end
-
-				newMeta.__eq = service.RawEqual
-				newMeta.__tostring = function() return custom.ToString or tostring(object) end
-				-- Roblox doesn't respect this afaik.
-				--newMeta.__gc = function(tab)
-				--	custom:RemoveFromCache()
-				--end
-				newMeta.__metatable = if main.Core and main.Core.DebugMode then nil else "Adonis_Proxy"
-				newMeta.__ADONIS_WRAPPED = true
-				custom:AddToCache()
-				return newObj
-			else
+			if typeof(object) ~= "Instance" and typeof(object) ~= "RBXScriptSignal" and typeof(object) ~= "RBXScriptConnection" then
 				return object
 			end
+			if Wrappers[object] then return Wrappers[object] end
+			local UnWrap = service.UnWrap
+			local wrapper = {}
+			rawset(wrapper, "_adonisInstance", object)
+			setmetatable(wrapper, {
+				__index = function(t, k)
+					local cv = rawget(t, k)
+					if cv ~= nil then return cv end
+					local v = object[k]
+					if type(v) == "function" then
+						return function(self, ...) return object[k](object, ...) end
+					end
+					return v
+				end;
+				__newindex = function(t, k, v)
+					object[k] = UnWrap(v)
+				end;
+				__tostring = function() return tostring(object) end;
+				__eq = function(a, b)
+					return UnWrap(a) == UnWrap(b)
+				end;
+			})
+			rawset(wrapper, "GetObject", function() return object end)
+			rawset(wrapper, "IsWrapped", function() return true end)
+			rawset(wrapper, "SetSpecial", function(_, name, val) rawset(wrapper, name, val) end)
+			Wrappers[object] = wrapper
+			return wrapper
 		end;
 	}
 
@@ -717,13 +606,6 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 		end;
 
 		Debounce = function(key, func)
-			local env = getfenv(2) -- TODO: Remove env thing
-			local Debounces = env and env._ADONIS_DEBOUNCES or Debounces or {}
-
-			if env then
-				env._ADONIS_DEBOUNCES = env and env._ADONIS_DEBOUNCES or {}
-			end
-
 			if Debounces[key] then
 				return false
 			else
@@ -1276,55 +1158,23 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 			return co
 		end;
 		ReadOnly = function(tabl, excluded, killOnError, noChecks)
-			local doChecks = not noChecks and service.RunService:IsClient()
-			if main.Core and main.Core.DebugMode then
-				doChecks = false
-			end
-			local player = doChecks and service.Players.LocalPlayer
-			local kick = player and player.Kick
-			local settings, getMeta, get, pc, resume, create = getfenv().settings, getmetatable, getfenv, pcall, coroutine.resume, coroutine.create
-			local unique = doChecks and getMeta(get())
-			local checkFor = doChecks and {
-				secret500 = true;
-				getrawmetatable = true;
-				setreadonly = true;
-				full_access = true;
-				elysianexecute = true;
-				decompile = true;
-				make_writable = true;
-				hookmetamethod = true;
-				hookfunction = true;
-			}
-
 			return service.NewProxy {
 				__index = function(tab, ind)
 					local ind = (type(ind) ~= "table" and typeof(ind) ~= "userdata") and ind or "Potentially dangerous index"
 
-					local topEnv = doChecks and get and get(2)
-					local setRan = doChecks and pcall(settings)
-					if doChecks and (setRan or (get ~= getfenv or getMeta ~= getmetatable or pc ~= pcall) or (not topEnv or type(topEnv) ~= "table" or getMeta(topEnv) ~= unique)) then
-						ErrorHandler("ReadError", "Tampering with Client [read rt0001]", `[{ind} {topEnv} {topEnv and getMeta(topEnv)}]\n{debug.traceback()}`)
-						--elseif doChecks and (function() local ran,err = pc(function() for i in next,checkFor do if topEnv[i] then return true end end return false end) if not ran or ran and err then return true end end)() then
-							-- ErrorHandler("ReadError", "Tampering with Client [read rt0002]", `[{ind} {topEnv} {topEnv and getMeta(topEnv)}]\n{debug.traceback()}`)
-					elseif tabl[ind]~=nil and type(tabl[ind]) == "table" and not (excluded and (excluded[ind] or excluded[tabl[ind]])) then
+					if tabl[ind]~=nil and type(tabl[ind]) == "table" and not (excluded and (excluded[ind] or excluded[tabl[ind]])) then
 						return service.ReadOnly(tabl[ind], excluded, killOnError, noChecks)
 					else
 						return tabl[ind]
 					end
 				end;
 
-				__newindex = function(tab,ind,new)
+				__newindex = function(tab, ind, new)
 					local ind = (type(ind) ~= "table" and typeof(ind) ~= "userdata") and ind or "Potentially dangerous index"
 
-					local topEnv = doChecks and get and get(2)
-					local setRan = doChecks and pcall(settings)
-					if doChecks and (setRan or (get ~= getfenv or getMeta ~= getmetatable or pc ~= pcall) or (not topEnv or type(topEnv) ~= "table" or getMeta(topEnv) ~= unique)) then
-						ErrorHandler("ReadError", "Tampering with Client [write wt0003]", `[{ind} {topEnv} {topEnv and getMeta(topEnv)}]\n{debug.traceback()}`)
-						--elseif doChecks and (function() local ran,err = pc(function() for i in next,checkFor do if topEnv[i] then return true end end return false end) if not ran or ran and err then return true end end)() then
-							-- ErrorHandler("ReadError", "Tampering with Client [write wt0004]", `[{ind} {topEnv} {topEnv and getMeta(topEnv)}]\n{debug.traceback()}`)
-					elseif not (excluded and (excluded[ind] or excluded[tabl[ind]])) then
+					if not (excluded and (excluded[ind] or excluded[tabl[ind]])) then
 						if killOnError then
-							ErrorHandler("ReadError", "Tampering with Client [write wt0005]", `[{ind} {topEnv} {topEnv and getMeta(topEnv)}]\n{debug.traceback()}`)
+							ErrorHandler("ReadError", "Read-only table write blocked", `[{ind}]\n{debug.traceback()}`)
 						end
 
 						warn(`Something attempted to set index {ind} in a read-only table.`)
@@ -1333,7 +1183,7 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 					end
 				end;
 
-				__metatable = if main.Core and main.Core.DebugMode then unique else "ReadOnly_Table"; -- Allow ReadOnly table's metadata to be modified if DebugMode is enabled
+				__metatable = if main.Core and main.Core.DebugMode then nil else "ReadOnly_Table";
 			}
 		end;
 		Wait = function(mode)
@@ -1472,7 +1322,7 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 			else
 				local ran, serv = pcall(function()
 					local gameservice = game:GetService(index)
-					return (client ~= nil and service.Wrap(gameservice, true)) or gameservice
+					return gameservice
 				end)
 
 				if ran and serv then
@@ -1496,52 +1346,30 @@ return function(errorHandler, eventChecker, fenceSpecific, env)
 	service.HelperService = HelperService
 	service.ThreadService = ThreadService
 	service.EventService = EventService
-	service.Signal = require((main.Shared or (main.Folder or Folder).Parent.Shared).GoodSignal)
+	service.Signal = require((main.Shared or script.Parent).GoodSignal)
 
-	if client ~= nil then
-		for i, val in service do
-			if type(val) == "userdata" then
-				service[i] = service.Wrap(val, true)
-			end
-		end
-	end
+	-- (auto-wrapping of service values removed)
 
 	for i, v in Wrapper do
-		if type(v) == "function" then
-			WrapService:SetSpecial(i, function(ignore, ...) return v(...) end)
-		else
-			WrapService:SetSpecial(i, v)
-		end
+		WrapService[i] = v
 	end
 
 	for i, v in Helpers do
-		if type(v) == "function" then
-			HelperService:SetSpecial(i, function(ignore, ...) return v(...) end)
-		else
-			HelperService:SetSpecial(i, v)
-		end
+		HelperService[i] = v
 	end
 
 	for i, v in Threads do
-		if type(v) == "function" then
-			ThreadService:SetSpecial(i, function(ignore, ...) return v(...) end)
-		else
-			ThreadService:SetSpecial(i, v)
-		end
+		ThreadService[i] = v
 	end
 
 	for i, v in Events do
-		if type(v) == "function" then
-			EventService:SetSpecial(i, function(ignore, ...) return v(...) end)
-		else
-			EventService:SetSpecial(i, v)
-		end
+		EventService[i] = v
 	end
 
-	for name, service in {WrapService = WrapService, EventService = EventService, ThreadService = ThreadService, HelperService = HelperService} do
-		service:SetSpecial("ClassName", name)
-		service:SetSpecial("ToString", name)
-		service:SetSpecial("IsA", function(i, check) return check == name end)
+	for name, svc in {WrapService = WrapService, EventService = EventService, ThreadService = ThreadService, HelperService = HelperService} do
+		svc.ClassName = name
+		svc.ToString = name
+		svc.IsA = function(_, check) return check == name end
 	end
 
 	if service.RunService:IsClient() then

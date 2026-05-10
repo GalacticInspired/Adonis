@@ -3,7 +3,7 @@
 --// GitHub@Expertcoderz was here to make things look better
 --// GitHub@annoynumus was here to patch the return teleport
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local server = Vargs.Server
 	local service = Vargs.Service
 

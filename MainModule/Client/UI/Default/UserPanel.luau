@@ -36,10 +36,6 @@ local function tabToString(tab)
 end
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
-
 	local client: table = env.client
 	local service: table = env.service
 	local gui = env.gui

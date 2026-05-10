@@ -42,15 +42,9 @@
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">NoEnv-Code</string>
 					<string name="ScriptGuid">{2CB6BF6F-3DB8-4A81-AACE-7F269F90D1DC}</string>
-					<ProtectedString name="Source"><![CDATA[client = nil
-Pcall = nil
-Routine = nil
-service = nil
-
-return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+					<ProtectedString name="Source"><![CDATA[return function(data, env)
+	local client = env.client
+	local service = env.service
 
 	local gTable = data.gTable
 	local gui = gTable.Object

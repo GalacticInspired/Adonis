@@ -1,6 +1,6 @@
 --// NOTE: THIS IS NOT A *CONFIG/USER* PLUGIN! ANYTHING IN THE MAINMODULE PLUGIN FOLDERS IS ALREADY PART OF/LOADED BY THE SCRIPT! DO NOT ADD THEM TO YOUR CONFIG>PLUGINS FOLDER!
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local client = Vargs.Client;
 	local service = Vargs.Service;
 
@@ -36,7 +36,6 @@ return function(Vargs, GetEnv)
 			Remote.Commands[ind] = val
 		end
 	})
-	client.Folder:SetSpecial("Shared", client.Shared)
 	Functions.GetRandom = function(pLen)
 		local random = math.random
 		local format = string.format

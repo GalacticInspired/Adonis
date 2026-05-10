@@ -1,6 +1,6 @@
 --// NOTE: THIS IS NOT A *CONFIG/USER* PLUGIN! ANYTHING IN THE MAINMODULE PLUGIN FOLDERS IS ALREADY PART OF/LOADED BY THE SCRIPT! DO NOT ADD THEM TO YOUR CONFIG>PLUGINS FOLDER!
 
-return function(Vargs, GetEnv)
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 
@@ -53,9 +53,6 @@ return function(Vargs, GetEnv)
 			Logs:AddLog("Script", `Attempted to add {ind} to legacy Remote.Unencrypted. Moving to Remote.Commands`)
 		end
 	})
-	if service.Wrapped(server.Folder) then
-		server.Folder:SetSpecial("Shared", server.Shared)
-	end
 	Functions.GetRandom = function(pLen)
 		local random = math.random
 		local format = string.format

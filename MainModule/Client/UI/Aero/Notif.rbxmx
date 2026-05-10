@@ -42,18 +42,12 @@
 					<Content name="LinkedSource"><null></null></Content>
 					<string name="Name">Code</string>
 					<string name="ScriptGuid">{7FAF7F51-BFCF-48C7-ADAE-8F50DCAA1FB3}</string>
-					<ProtectedString name="Source"><![CDATA[client = nil
-Pcall = nil
-Routine = nil
-service = nil
-gTable = nil
-
---// All global vars will be wiped/replaced except script
+					<ProtectedString name="Source"><![CDATA[--// All global vars will be wiped/replaced except script
 
 return function(data, env)
-	if env then
-		setfenv(1, env)
-	end
+	local client = env.client
+	local service = env.service
+	local gTable = env.gTable
 
 	local playergui = service.PlayerGui
 	local gui = client.UI.Prepare(script.Parent.Parent)

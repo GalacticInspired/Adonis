@@ -13,8 +13,6 @@ local type = type
 local print = print
 local assert = assert
 local string = string
-local setfenv = setfenv
-local getfenv = getfenv
 local require = require
 local tostring = tostring
 local coroutine = coroutine
@@ -85,13 +83,6 @@ local function callCheck(child)
 		Kill("[ACLI-0x1A58C635]: Locked")
 	else
 		print("Child not locked")
-		xpcall(function()
-			return child[{}]
-		end, function()
-			if getfenv(1) ~= getfenv(2) then
-				Kill("[ACLI-0x8142C75A]: Check calller error")
-			end
-		end)
 	end
 end
 

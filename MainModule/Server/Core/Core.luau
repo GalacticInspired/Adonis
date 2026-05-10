@@ -11,16 +11,13 @@ type TableData = {
 }
 
 --// Core
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
+return function(Vargs)
 	local server = Vargs.Server;
 	local service = Vargs.Service;
 
 	local Functions, Admin, Anti, Core, HTTP, Logs, Remote, Process, Variables, Settings, Deps, t;
 	local AddLog, Queue, TrackTask
-	local logError = env.logError
+	local logError = server.LogError
 	local function Init(data)
 		Functions = server.Functions;
 		Admin = server.Admin;
@@ -38,7 +35,7 @@ return function(Vargs, GetEnv)
 		AddLog = Logs.AddLog;
 		Queue = service.Queue;
 		TrackTask = service.TrackTask;
-		logError = logError or env.logError;
+		logError = logError or server.LogError;
 
 		--// Core variables
 		Core.Themes = data.Themes or {}
@@ -89,7 +86,7 @@ return function(Vargs, GetEnv)
 		if Core.DataStore then
 			TrackTask("Thread: DSLoadAndHook", function()
 				--// Catch any errors and print it to the console; allow for debugging.
-				task.defer(env.Pcall, Core.LoadData)
+				task.defer(server.Pcall, Core.LoadData)
 			end)
 		end
 
@@ -572,16 +569,18 @@ return function(Vargs, GetEnv)
 			data.Executions = 0
 			data.Time = os.time()
 			data.Type = data.Type or data.Script.ClassName
-			data.Wrapped = service.Wrap(data.Script)
-			data.Wrapped:SetSpecial("Clone",function()
-				return Core.RegisterScript({
-					Script = service.UnWrap(data.Script):Clone();
-					Code = data.Code;
-					Source = data.Source;
-					noCache = data.noCache;
-					runLimit = data.runLimit;
-				})
-			end)
+			data.Wrapped = {
+				Script = data.Script;
+				Clone = function()
+					return Core.RegisterScript({
+						Script = data.Script:Clone();
+						Code = data.Code;
+						Source = data.Source;
+						noCache = data.noCache;
+						runLimit = data.runLimit;
+					})
+				end;
+			}
 
 			for ind,scr in Core.ExecuteScripts do
 				if scr.Script == data.Script then
@@ -1400,8 +1399,6 @@ return function(Vargs, GetEnv)
 			local next = next
 			local table = table
 			local task = task
-			local getfenv = getfenv
-			local setfenv = setfenv
 			local require = require
 			local tostring = tostring
 			local tonumber = tonumber
@@ -1410,7 +1407,7 @@ return function(Vargs, GetEnv)
 			local math = math
 			local server = server
 			local service = service
-			local Routine = env.Routine
+			local Routine = server.Routine
 			local MetaFunc = service.MetaFunc
 			local StartLoop = service.StartLoop
 			local API_Special = {
@@ -1423,8 +1420,6 @@ return function(Vargs, GetEnv)
 				ClearSavedSettings = Settings.Allowed_API_Calls.DataStore and Settings.Allowed_API_Calls.Settings;
 				SetSetting = Settings.Allowed_API_Calls.Settings;
 			}
-
-			setfenv(1,setmetatable({}, {__metatable = getmetatable(getfenv())}))
 
 			local API_Specific = {
 				API_Specific = {

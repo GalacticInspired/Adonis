@@ -1,38 +1,5 @@
-client = nil
-service = nil
-Pcall = nil
-Routine = nil
-GetEnv = nil
-origEnv = nil
-logError = nil
-log = nil
-
 --// Processing
-return function(Vargs, GetEnv)
-	local env = GetEnv(nil, {script = script})
-	setfenv(1, env)
-
-	local _G, game, script, getfenv, setfenv, workspace,
-		getmetatable, setmetatable, loadstring, coroutine,
-		rawequal, typeof, print, math, warn, error,  pcall,
-		xpcall, select, rawset, rawget, ipairs, pairs,
-		next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-		newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-		NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-		NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-		Vector3int16, require, table, type, wait,
-		Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay =
-		_G, game, script, getfenv, setfenv, workspace,
-		getmetatable, setmetatable, loadstring, coroutine,
-		rawequal, typeof, print, math, warn, error,  pcall,
-		xpcall, select, rawset, rawget, ipairs, pairs,
-		next, Rect, Axes, os, time, Faces, unpack, string, Color3,
-		newproxy, tostring, tonumber, Instance, TweenInfo, BrickColor,
-		NumberRange, ColorSequence, NumberSequence, ColorSequenceKeypoint,
-		NumberSequenceKeypoint, PhysicalProperties, Region3int16,
-		Vector3int16, require, table, type, wait,
-		Enum, UDim, UDim2, Vector2, Vector3, Region3, CFrame, Ray, delay
-
+return function(Vargs)
 	local script = script
 	local service = Vargs.Service
 	local client = Vargs.Client
@@ -76,10 +43,6 @@ return function(Vargs, GetEnv)
 		Process.RunAfterLoaded = nil;
 	end
 
-	getfenv().client = nil
-	getfenv().service = nil
-	getfenv().script = nil
-
 	client.Process = {
 		Init = Init;
 		RunLast = RunLast;
@@ -98,10 +61,10 @@ return function(Vargs, GetEnv)
 			if type(com) == "string" then
 				if com == `{client.DepsName}GIVE_KEY` then
 					if not Core.Key then
-						log("~! Set remote key")
+						client.Log("~! Set remote key")
 						Core.Key = args[1]
 
-						log("~! Call Finish_Loading()")
+						client.Log("~! Call Finish_Loading()")
 						client.Finish_Loading()
 					end
 				elseif Core.Key then
@@ -110,7 +73,7 @@ return function(Vargs, GetEnv)
 					if command then
 						local rets = table.pack(service.TrackTask(`Remote: {comString}`, command, false, args))
 						if not rets[1] then
-							logError(rets[2])
+							client.LogError(rets[2])
 						else
 							return table.pack(table.unpack(rets, 2))
 						end
@@ -126,7 +89,7 @@ return function(Vargs, GetEnv)
 		ErrorMessage = function(Message, Trace, Script)
 			--service.FireEvent("ErrorMessage", Message, Trace, Script)
 			if Message and Message ~= "nil" and Message ~= "" and (string.find(Message,":: Adonis ::") or string.find(Message,script.Name) or Script == script) then
-				logError(`{Message} - {Trace}`)
+				client.LogError(`{Message} - {Trace}`)
 			end
 		end;
 
